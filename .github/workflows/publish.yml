@@ -32,7 +32,7 @@ jobs:
           cache: 'sbt'
 
       - name: Publish
-        run: ./scripts/github-action/publish.sh
+        run: ./scripts/github-actions/publish.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
