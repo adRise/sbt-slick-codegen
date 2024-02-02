@@ -1,9 +1,7 @@
-name: Release
+name: Publish
 
 on:
-  release:
-    types:
-      - published
+  workflow_dispatch:
 
 # can maybe test via https://github.com/nektos/act
 # act -s DOCKER_USERNAME=abc -s DOCKER_PASSWORD=xyz --container-architecture linux/arm64 -W .github/workflows/release.yml release
