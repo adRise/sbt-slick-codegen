@@ -1,12 +1,6 @@
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      TUBI_PROJECT_VERSION:
-        description: 'semantic version part to bump, either patch, minor or major'
-        required: true
-        default: 'patch'
   release:
     types:
       - published
@@ -21,18 +15,6 @@ jobs:
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
-#      - name: Set build info
-#        id: build_info
-#        run: |
-#          if [ ${{ github.event_name }} == 'workflow_dispatch' ]; then
-#            echo "tubi-project-name=${{ github.event.inputs.TUBI_PROJECT_NAME }}" >> "$GITHUB_OUTPUT"
-#            echo "tubi-project-version=${{ github.event.inputs.TUBI_PROJECT_VERSION }}" >> "$GITHUB_OUTPUT"
-#          else
-#            tag="${{ github.event.release.tag_name }}"
-#            name="${tag%-v[0-9]*\.[0-9]*\.[0-9]*}"
-#            echo "tubi-project-name=${name}" >> "$GITHUB_OUTPUT"
-#            echo "tubi-project-version=${tag##[a-z]*-v}" >> "$GITHUB_OUTPUT"
-#          fi
 
       - name: Configure git user to push
         run: |
@@ -51,18 +33,12 @@ jobs:
           distribution: 'temurin'
           cache: 'sbt'
 
-      - name: Generate artifact
-        run: ./scripts/github-action/release.sh
+      - name: Publish
+        run: ./scripts/github-action/publish.sh
         env:
-          TUBI_PROJECT_NAME: ${{ steps.build_info.outputs.tubi-project-name }}
-          TUBI_PROJECT_VERSION: ${{ steps.build_info.outputs.tubi-project-version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_ACCOUNT_ID: 370025973162
-          AWS_REGION: us-east-2
 
 #      - name: notify build status
 #        if: always()
