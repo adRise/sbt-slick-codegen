@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
 addSbtPlugin("io.github.davidmweber" % "flyway-sbt" % Versions.flywaySbt)
 
 publishTo := Some(if (isSnapshot.value) Repo.Jfrog.Tubins.sbtDev else Repo.Jfrog.Tubins.sbtRelease)
-
+ThisBuild / versionScheme := Some("early-semver")
 Test / publishArtifact := false
 
 scriptedBufferLog := false
