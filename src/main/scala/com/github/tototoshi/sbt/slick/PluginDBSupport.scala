@@ -11,21 +11,40 @@ trait PluginDBSupport {
   protected final val dbPass = "password"
 
   protected val postgresDbUrl = settingKey[String]("The database urlt")
+  protected val stopDb = taskKey[Unit]("Start the postgres docker container and run flyway migrate")
+  protected val startDb = taskKey[Unit]("Stop and remove the postgres container")
 
   lazy val postgresContainerPort = settingKey[Int]("The port of postgres port")
   lazy val postgresVersion = settingKey[String]("The postgres version")
 
-  protected def dbSettings = {
+  protected def dbSettings: Seq[sbt.Setting[_]] = {
     import FlywayPlugin.autoImport._
     FlywayPlugin.projectSettings ++
       Seq(
+        flywayDefaults / Keys.logLevel := Level.Warn,
         postgresDbUrl := s"jdbc:postgresql://127.0.0.1:${postgresContainerPort.value}/postgres",
         postgresContainerPort := 15432,
         postgresVersion := "13.7",
         flywayUrl := postgresDbUrl.value,
         flywayUser := dbUser,
         flywayPassword := dbPass,
-        flywayLocations := Seq(s"filesystem:${(Compile / Keys.resourceDirectory).value.getAbsoluteFile}/db/migration")
+        flywayLocations := Seq(s"filesystem:${(Compile / Keys.resourceDirectory).value.getAbsoluteFile}/db/migration"),
+        startDb := Def
+          .sequential(
+            Def.task {
+              PostgresContainer.start(
+                exportPort = postgresContainerPort.value,
+                password = dbPass,
+                postgresVersion = postgresVersion.value,
+                logger = Keys.streams.value.log
+              )
+            },
+            FlywayPlugin.autoImport.flywayMigrate
+          )
+          .value,
+        stopDb := {
+          PostgresContainer.stop(Keys.streams.value.log)
+        }
       )
   }
 
@@ -36,18 +55,9 @@ trait PluginDBSupport {
     * @return
     */
   protected def withDb[A](task: Def.Initialize[Task[A]]): Def.Initialize[Task[A]] = Def.taskDyn {
-    val containerClosable = Def.task {
-      PostgresContainer.run(
-        exportPort = postgresContainerPort.value,
-        password = dbPass,
-        postgresVersion = postgresVersion.value,
-        logger = Keys.streams.value.log
-      )
-    }.value
-
-    Def
-      .sequential(FlywayPlugin.autoImport.flywayMigrate, task)
-      .andFinally(containerClosable.close())
+    task
+      .dependsOn(startDb)
+      .doFinally(stopDb.taskValue)
   }
 
 }
