@@ -5,11 +5,12 @@ import sbt.Logger
 import java.util.concurrent.atomic.AtomicReference
 
 import scala.concurrent.{Await, Promise}
-import scala.concurrent.duration.Duration
-import scala.util.Success
+import scala.concurrent.duration.{Duration, DurationInt}
+import scala.util.{Success, Try}
 
 import com.github.dockerjava.api.async.ResultCallback
-import com.github.dockerjava.api.model.{Frame, PortBinding}
+import com.github.dockerjava.api.exception.NotFoundException
+import com.github.dockerjava.api.model.{Frame, PortBinding, PullResponseItem}
 import com.github.dockerjava.core.DockerClientBuilder
 
 object PostgresContainer {
@@ -19,9 +20,24 @@ object PostgresContainer {
   def start(exportPort: Int, password: String, postgresVersion: String, logger: Logger): Unit = {
     runningDb.get() match {
       case None =>
+        val image = s"postgres:$postgresVersion"
         val dockerClient = DockerClientBuilder.getInstance.build
+        Try(dockerClient.inspectImageCmd(image).exec()).recover {
+          case _: NotFoundException =>
+            logger.info(s"Pulling image ${image} ...")
+            val done = Promise[Unit]
+            dockerClient
+              .pullImageCmd(image)
+              .exec(new ResultCallback.Adapter[PullResponseItem] {
+                override def onComplete(): Unit = done.success(())
+              })
+
+            Await.result(done.future, 5.minutes)
+            logger.info(s"Image $image pull done")
+        }
+
         val container = dockerClient
-          .createContainerCmd(s"postgres:$postgresVersion")
+          .createContainerCmd(image)
           .withEnv(s"POSTGRES_PASSWORD=$password")
 
         container.getHostConfig
