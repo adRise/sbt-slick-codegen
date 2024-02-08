@@ -2,15 +2,16 @@ package com.tubitv
 
 import sbt.Logger
 
+import java.sql.DriverManager
 import java.util.concurrent.atomic.AtomicReference
 
 import scala.concurrent.{Await, Promise}
-import scala.concurrent.duration.{Duration, DurationInt}
-import scala.util.{Success, Try}
+import scala.concurrent.duration.DurationInt
+import scala.util.{Try, Using}
 
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.exception.NotFoundException
-import com.github.dockerjava.api.model.{Frame, PortBinding, PullResponseItem}
+import com.github.dockerjava.api.model.{PortBinding, PullResponseItem}
 import com.github.dockerjava.core.DockerClientBuilder
 
 object PostgresContainer {
@@ -49,24 +50,22 @@ object PostgresContainer {
 
           dockerClient.startContainerCmd(containerId).exec()
 
-          val ready = Promise[Unit]()
-          dockerClient
-            .logContainerCmd(containerId)
-            .withFollowStream(true)
-            .withSince(0)
-            .withStdOut(true)
-            .withStdErr(true)
-            .exec(new ResultCallback.Adapter[Frame] {
-              override def onNext(`object`: Frame): Unit = {
-                val lines = new String(`object`.getPayload).split("\n")
-                if (lines.exists(_.endsWith("database system is ready to accept connections"))) {
-                  ready.complete(Success(()))
-                  this.close()
+          var isReady = false
+          val deadLine = 3.minutes.fromNow
+          while (!isReady) {
+            Class.forName("org.postgresql.Driver")
+            val url = s"jdbc:postgresql://127.0.0.1:${exportPort}/postgres"
+            Using(DriverManager.getConnection(url, "postgres", password))(_ => ()).toOption match {
+              case Some(_) =>
+                isReady = true
+              case _ =>
+                if (deadLine.isOverdue()) {
+                  throw new Exception("Postgres container is not ready after 3 minutes")
                 }
-              }
-            })
-
-          Await.result(ready.future, Duration.Inf)
+                Thread.sleep(1000)
+            }
+          }
+          logger.info("Docker container postgres started")
         }
       case _ =>
     }
