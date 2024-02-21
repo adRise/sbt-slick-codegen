@@ -13,7 +13,6 @@ enablePlugins(SbtPlugin)
 sbtPlugin := true
 name := """sbt-slick-codegen"""
 organization := "com.tubitv"
-version := "0.0.1-SNAPSHOT"
 
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % Versions.slick,
