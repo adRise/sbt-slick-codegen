@@ -5,11 +5,6 @@ import scala.collection.JavaConverters.*
 
 enablePlugins(SbtPlugin)
 
-//scalariformPreferences := scalariformPreferences.value
-//  .setPreference(AlignSingleLineCaseStatements, true)
-//  .setPreference(DoubleIndentConstructorArguments, true)
-//  .setPreference(DanglingCloseParenthesis, Preserve)
-
 sbtPlugin := true
 name := """sbt-slick-codegen"""
 organization := "com.tubitv"

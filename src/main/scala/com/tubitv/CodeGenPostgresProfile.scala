@@ -1,6 +1,6 @@
 package com.tubitv
 
-import java.sql.Types.{ CHAR, LONGNVARCHAR, LONGVARCHAR, NCHAR, NVARCHAR, VARCHAR }
+import java.sql.Types.{CHAR, LONGNVARCHAR, LONGVARCHAR, NCHAR, NVARCHAR, VARCHAR}
 
 import scala.concurrent.ExecutionContext
 
@@ -9,14 +9,16 @@ import slick.jdbc.meta._
 
 class CodeGenPostgresProfile(config: CodeGenConfig) extends PostgresProfile {
 
-  override def createModelBuilder(tables: Seq[MTable], ignoreInvalidDefaults: Boolean)(implicit ec: ExecutionContext): slick.jdbc.JdbcModelBuilder = new ModelBuilder(tables, ignoreInvalidDefaults)(ec) {
+  override def createModelBuilder(tables: Seq[MTable], ignoreInvalidDefaults: Boolean)(implicit
+    ec: ExecutionContext
+  ): slick.jdbc.JdbcModelBuilder = new ModelBuilder(tables, ignoreInvalidDefaults)(ec) {
 
     val typeMapper: PartialFunction[String, String] = config.byTypeMapper orElse {
-      case "name" | "text" | "varchar" => "String"
-      case "int4" | "serial" => "Int"
-      case "int2" | "smallserial" => "Short"
+      case "name" | "text" | "varchar"  => "String"
+      case "int4" | "serial"            => "Int"
+      case "int2" | "smallserial"       => "Short"
       case "int8" | "bigserial" | "oid" => "Long"
-      case "bool" | "bit" => "Boolean"
+      case "bool" | "bit"               => "Boolean"
     }
 
     val arraryDetector: PartialFunction[String, String] = {
@@ -35,7 +37,8 @@ class CodeGenPostgresProfile(config: CodeGenConfig) extends PostgresProfile {
               if (rt == "String" && !isJdbcStringType(meta.sqlType)) {
                 logger.warn(
                   s"Column [${meta.name}] in table [${meta.table.name}] with type [${meta.typeName}] " +
-                    s"does not have a custom mapping, so defaults map as [String], consider defining a custom type mapper")
+                    s"does not have a custom mapping, so defaults map as [String], consider defining a custom type mapper"
+                )
               }
               rt
             })
@@ -48,7 +51,7 @@ class CodeGenPostgresProfile(config: CodeGenConfig) extends PostgresProfile {
 
     private def isJdbcStringType(sqlType: Int) = sqlType match {
       case CHAR | VARCHAR | LONGVARCHAR | NCHAR | NVARCHAR | LONGNVARCHAR => true
-      case _ => false
+      case _                                                              => false
     }
   }
 }

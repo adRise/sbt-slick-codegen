@@ -27,4 +27,4 @@ jobs:
         cache: 'sbt'
 
     - name: Run tests
-      run: sbt scripted
+      run: sbt scalafmtAll scripted

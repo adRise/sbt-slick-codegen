@@ -1,6 +1,6 @@
 package com.tubitv
 
-import slick.{ model => m }
+import slick.{model => m}
 import slick.codegen.SourceCodeGenerator
 
 class CustomizeSourceCodeGenerator(model: m.Model, config: CodeGenConfig) extends SourceCodeGenerator(model) {
