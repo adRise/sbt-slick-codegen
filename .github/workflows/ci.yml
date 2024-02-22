@@ -19,5 +19,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Set up JDK 11 # it auto caches https://github.com/actions/setup-java#caching-packages-dependencies
+      uses: actions/setup-java@v3.11.0
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: 'sbt'
+
     - name: Run tests
-      run: SBT_VERSION="${{ matrix.sbt_version }}" make test
+      run: sbt scalafmtAll scripted

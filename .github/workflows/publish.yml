@@ -2,3 +2,51 @@ name: Publish
 
 on:
   workflow_dispatch:
+
+# can maybe test via https://github.com/nektos/act
+# act -s DOCKER_USERNAME=abc -s DOCKER_PASSWORD=xyz --container-architecture linux/arm64 -W .github/workflows/release.yml release
+jobs:
+  release:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      - name: Configure git user to push
+        run: |
+          git config --global user.email "sbt@tubi.tv"
+          git config --global user.name "sbt"
+
+      - name: Clone and checkout to current branch
+        uses: actions/checkout@v3.5.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 11 # it auto caches https://github.com/actions/setup-java#caching-packages-dependencies
+        uses: actions/setup-java@v3.11.0
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'sbt'
+
+      - name: Publish
+        run: ./scripts/github-actions/publish.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
+#      - name: notify build status
+#        if: always()
+#        uses: slackapi/slack-github-action@v1.23.0
+#        with:
+#          # Slack channel id, channel name, or user id to post message.
+#          # See also: https://api.slack.com/methods/chat.postMessage#channels
+#          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+#          channel-id: ${{ github.event.repository.name }}-cicd
+#          # For posting a simple plain text message, no md just for link shortening
+#          slack-message: "${{ steps.build_info.outputs.tubi-project-name }}-v${{ steps.build_info.outputs.tubi-project-version }} release ${{ job.status }}: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+#        env:
+#          SLACK_BOT_TOKEN: ${{ secrets.BUILD_NOTIFY_SLACK_APP_TOKEN }}

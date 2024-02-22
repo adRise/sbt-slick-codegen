@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/tototoshi/sbt-slick-codegen/actions/workflows/ci.yml/badge.svg)](https://github.com/tototoshi/sbt-slick-codegen/actions/workflows/ci.yml)
 
-slick-codegen compile hook for sbt
+slick-codegen plugin, forked from [sbt-slick-codegen](https://github.com/tototoshi/sbt-slick-codegen), which aims to generate code specially for Postgres
 
 ## Install
 
