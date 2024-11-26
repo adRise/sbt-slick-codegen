@@ -18,10 +18,10 @@ object PostgresContainer {
 
   private val runningDb = new AtomicReference[Option[String]](None)
 
-  def start(exportPort: Int, password: String, postgresVersion: String, logger: Logger): Unit = {
+  def start(exportPort: Int, password: String, postgresImage: String, postgresVersion: String, logger: Logger): Unit = {
     runningDb.get() match {
       case None =>
-        val image = s"postgres:$postgresVersion"
+        val image = s"$postgresImage:$postgresVersion"
         val dockerClient = DockerClientBuilder.getInstance.build
         Try(dockerClient.inspectImageCmd(image).exec()).recover {
           case _: NotFoundException =>
