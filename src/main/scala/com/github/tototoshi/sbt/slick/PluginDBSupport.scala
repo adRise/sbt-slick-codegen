@@ -15,6 +15,7 @@ trait PluginDBSupport {
   protected val startDb = taskKey[Unit]("Stop and remove the postgres container")
 
   lazy val postgresContainerPort = settingKey[Int]("The port of postgres port")
+  lazy val postgresImage = settingKey[String]("The postgres image name")
   lazy val postgresVersion = settingKey[String]("The postgres version")
 
   protected def dbSettings: Seq[sbt.Setting[_]] = {
@@ -24,6 +25,7 @@ trait PluginDBSupport {
         flywayDefaults / Keys.logLevel := Level.Warn,
         postgresDbUrl := s"jdbc:postgresql://127.0.0.1:${postgresContainerPort.value}/postgres",
         postgresContainerPort := 15432,
+        postgresImage := "postgres",
         postgresVersion := "13.7",
         flywayUrl := postgresDbUrl.value,
         flywayUser := dbUser,
@@ -35,6 +37,7 @@ trait PluginDBSupport {
               PostgresContainer.start(
                 exportPort = postgresContainerPort.value,
                 password = dbPass,
+                postgresImage = postgresImage.value,
                 postgresVersion = postgresVersion.value,
                 logger = Keys.streams.value.log
               )
