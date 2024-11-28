@@ -58,6 +58,9 @@ object CodegenPlugin extends sbt.AutoPlugin with PluginDBSupport {
     lazy val slickCodegenCodeGenerator: SettingKey[m.Model => SourceCodeGenerator] =
       settingKey[m.Model => SourceCodeGenerator]("Function to create CodeGenerator to be used")
 
+    lazy val slickCodegenIncludedTableTypes: SettingKey[Seq[String]] =
+      settingKey[Seq[String]]("Table types that slick schema can be generated for")
+
     lazy val slickCodegenExcludedTables: SettingKey[Seq[String]] =
       settingKey[Seq[String]]("Tables that should be excluded")
 
@@ -150,6 +153,7 @@ object CodegenPlugin extends sbt.AutoPlugin with PluginDBSupport {
       val driver = slickCodegenDriver.value
       val url = postgresDbUrl.value
       val jdbcDriver = slickCodegenJdbcDriver.value
+      val tableTypes = slickCodegenIncludedTableTypes.value
       val excluded = slickCodegenExcludedTables.value
       val included = slickCodegenIncludedTables.value
       val database = driver.api.Database.forURL(url = url, driver = jdbcDriver, user = dbUser, password = dbPass)
@@ -163,7 +167,7 @@ object CodegenPlugin extends sbt.AutoPlugin with PluginDBSupport {
         }
 
         val tables = MTable
-          .getTables(None, None, None, Some(Seq("TABLE", "VIEW", "MATERIALIZED VIEW")))
+          .getTables(None, None, None, Some(tableTypes))
           .map(ts => ts.filter(t => included.isEmpty || (included contains t.name.name)))
           .map(ts => ts.filterNot(t => excluded contains t.name.name))
 
@@ -182,6 +186,7 @@ object CodegenPlugin extends sbt.AutoPlugin with PluginDBSupport {
     slickCodegenOutputToMultipleFiles := false,
     slickCodegenOutputDir := (Compile / Keys.scalaSource).value,
     slickCodegenOutputContainer := "Tables",
+    slickCodegenIncludedTableTypes := Seq("TABLE", "PARTITIONED TABLE", "VIEW", "MATERIALIZED VIEW"),
     slickCodegenExcludedTables := Seq(),
     slickCodegenIncludedTables := Seq(),
     slickCodegenCodeGenerator := { (m) => new CustomizeSourceCodeGenerator(m, slickCodegenGeneratorConfig.value) },
