@@ -14,8 +14,11 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick-codegen" % Versions.slick,
   "org.postgresql" % "postgresql" % Versions.postgresql,
   "com.github.docker-java" % "docker-java" % Versions.dockerJava,
+
+  // Runtime
+  "org.flywaydb" % "flyway-database-postgresql" % Versions.flyway % Runtime,
 )
-addSbtPlugin("io.github.davidmweber" % "flyway-sbt" % Versions.flywaySbt)
+addSbtPlugin("com.github.sbt" % "flyway-sbt" % Versions.flywaySbt)
 
 publish := codeArtifactPublish.value
 ThisBuild / versionScheme := Some("early-semver")

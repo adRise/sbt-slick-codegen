@@ -2,8 +2,8 @@ package com.github.tototoshi.sbt.slick
 
 import sbt.*
 
-import _root_.io.github.davidmweber.FlywayPlugin
 import com.tubitv.PostgresContainer
+import flywaysbt.FlywayPlugin
 
 trait PluginDBSupport {
 
@@ -39,15 +39,15 @@ trait PluginDBSupport {
                 password = dbPass,
                 postgresImage = postgresImage.value,
                 postgresVersion = postgresVersion.value,
-                logger = Keys.streams.value.log
+                logger = Keys.streams.value.log,
               )
             },
-            FlywayPlugin.autoImport.flywayMigrate
+            FlywayPlugin.autoImport.flywayMigrate,
           )
           .value,
         stopDb := {
           PostgresContainer.stop(Keys.streams.value.log)
-        }
+        },
       )
   }
 
@@ -62,5 +62,4 @@ trait PluginDBSupport {
       .dependsOn(startDb)
       .doFinally(stopDb.taskValue)
   }
-
 }
