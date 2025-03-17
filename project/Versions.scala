@@ -3,5 +3,5 @@ object Versions {
   val postgresql = "42.7.5"
   val dockerJava = "3.3.4"
   val flywaySbt = "10.21.0"
-  val flyway = flywaySbt
+  val flyway = "10.21.0"
 }
