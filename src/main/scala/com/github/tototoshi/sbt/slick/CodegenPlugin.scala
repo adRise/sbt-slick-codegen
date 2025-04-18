@@ -178,7 +178,11 @@ object CodegenPlugin extends sbt.AutoPlugin with PluginDBSupport {
           .getTables(None, None, None, Some(tableTypes))
           .map (
             ts =>
+              // only include specified tables
+              // if included is empty, then include all tables
+              // if included is not empty, then only include the specified tables
               (if (included.isEmpty) ts else ts.filter(t => containsTable(included, t)))
+                // if excluded is not empty, then exclude the specified tables
                 .filterNot(t => containsTable(excluded, t))
           )
 
