@@ -61,12 +61,16 @@ object CodegenPlugin extends sbt.AutoPlugin with PluginDBSupport {
     lazy val slickCodegenIncludedTableTypes: SettingKey[Seq[String]] =
       settingKey[Seq[String]]("Table types that slick schema can be generated for")
 
-    lazy val slickCodegenExcludedTables: SettingKey[Seq[String]] =
-      settingKey[Seq[String]]("Tables that should be excluded")
+    lazy val slickCodegenExcludedTables: SettingKey[Seq[(String, String)]] =
+      settingKey[Seq[(String, String)]](
+        "Tables that should be excluded" +
+          "\nkey is the schema name, value is the table name."
+      )
 
-    lazy val slickCodegenIncludedTables: SettingKey[Seq[String]] =
-      settingKey[Seq[String]](
-        "Tables that should be included. If this list is not nil, only the included tables minus excluded will be taken."
+    lazy val slickCodegenIncludedTables: SettingKey[Seq[(String, String)]] =
+      settingKey[Seq[(String, String)]](
+        "Tables that should be included. If this list is not nil, only the included tables minus excluded will be taken." +
+          "\nkey is the schema name, value is the table name."
       )
 
     /** Define a new configuration scope for slick code gen,
@@ -166,10 +170,21 @@ object CodegenPlugin extends sbt.AutoPlugin with PluginDBSupport {
             throw new RuntimeException("Failed to run slick-codegen: " + e.getMessage, e)
         }
 
+        def containsTable(seq: Seq[(String, String)], t: MTable): Boolean = {
+          seq.exists { case (schema, name) => t.name.schema.contains(schema) && t.name.name == name }
+        }
+
         val tables = MTable
           .getTables(None, None, None, Some(tableTypes))
-          .map(ts => ts.filter(t => included.isEmpty || (included contains t.name.name)))
-          .map(ts => ts.filterNot(t => excluded contains t.name.name))
+          .map (
+            ts =>
+              // only include specified tables
+              // if included is empty, then include all tables
+              // if included is not empty, then only include the specified tables
+              (if (included.isEmpty) ts else ts.filter(t => containsTable(included, t)))
+                // if excluded is not empty, then exclude the specified tables
+                .filterNot(t => containsTable(excluded, t))
+          )
 
         val dbio = for {
           m <- driver.createModel(Some(tables))
